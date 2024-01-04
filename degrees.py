@@ -12,6 +12,11 @@ people = {}
 # Maps movie_ids to a dictionary of: title, year, stars (a set of person_ids)
 movies = {}
 
+class Node():
+    def __init__(self, state, parent, action):
+        self.state = state
+        self.parent = parent
+        self.action = action
 
 def load_data(directory):
     """
@@ -91,9 +96,55 @@ def shortest_path(source, target):
 
     If no possible path, returns None.
     """
+    
+    # Keep track of number of states explored
+    num_explored = 0
 
-    # TODO
-    raise NotImplementedError
+    # Initialize frontier to just the starting position
+    solution = None
+    start = Node(source, parent=None, action=None)
+    goal = target
+    frontier = StackFrontier()
+    frontier.add(start)
+
+    # Initialize an empty explored set
+    explored = set()
+
+    # Keep looping until solution found
+    while True:
+
+        # If nothing left in frontier, then no path
+        if frontier.empty():
+            raise Exception("no solution")
+
+        # Choose a node from the frontier
+        node = frontier.remove()
+        num_explored += 1
+
+        # If node is the goal, then we have a solution
+        if node.state == goal:
+            actions = []
+            actors = []
+            while node.parent is not None:
+                actions.append(node.action)
+                actors.append(node.state)
+                node = node.parent
+            actions.reverse()
+            actors.reverse()
+
+            solution = []
+            for i in range(len(actions)):
+                solution.append( (actions[i], actors[i]) )
+            return solution
+
+        # Mark node as explored
+        explored.add(node.state)
+
+        # Add neighbors to frontier
+        for ac, st in neighbors_for_person(node.state):
+            if not frontier.contains_state(st) and st not in explored:
+                child = Node(state=st, parent=node, action=ac)
+                frontier.add(child)
 
 
 def person_id_for_name(name):
