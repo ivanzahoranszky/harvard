@@ -1,7 +1,7 @@
 import csv
 import sys
 
-from util import Node, StackFrontier, QueueFrontier
+from util import Node, StackFrontier
 
 # Maps names to a set of corresponding person_ids
 names = {}
@@ -17,6 +17,17 @@ class Node():
         self.state = state
         self.parent = parent
         self.action = action
+
+class AStarFrontier(StackFrontier):
+    def remove(self):
+        if self.empty():
+            raise Exception("empty frontier")
+        else:
+            indexOfSmallest = 0 
+            for index, value in enumerate(self.frontier):
+                if int(people[value.state]['birth']) < int(people[self.frontier[indexOfSmallest].state]['birth']):
+                    indexOfSmallest = index
+            return self.frontier.pop(indexOfSmallest)        
 
 def load_data(directory):
     """
@@ -104,7 +115,7 @@ def shortest_path(source, target):
     solution = None
     start = Node(source, parent=None, action=None)
     goal = target
-    frontier = StackFrontier()
+    frontier = AStarFrontier()
     frontier.add(start)
 
     # Initialize an empty explored set
@@ -119,6 +130,7 @@ def shortest_path(source, target):
 
         # Choose a node from the frontier
         node = frontier.remove()
+
         num_explored += 1
 
         # If node is the goal, then we have a solution
@@ -132,15 +144,18 @@ def shortest_path(source, target):
             actions.reverse()
             actors.reverse()
 
+            # TODO should not be a separate step
             solution = []
             for i in range(len(actions)):
                 solution.append( (actions[i], actors[i]) )
+
             return solution
 
         # Mark node as explored
         explored.add(node.state)
 
         # Add neighbors to frontier
+        # TODO only if the actor was born before the film
         for ac, st in neighbors_for_person(node.state):
             if not frontier.contains_state(st) and st not in explored:
                 child = Node(state=st, parent=node, action=ac)
